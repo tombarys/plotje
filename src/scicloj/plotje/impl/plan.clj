@@ -162,7 +162,10 @@
    uses wadogo :datetime scale for calendar-aware ticks and formatting.
    When `scale-spec` contains `:breaks` (a vector of numbers), those
    exact values are used as ticks instead of the auto-computed ones
-   -- ggplot2's `scale_*_continuous(breaks = ...)` equivalent."
+   -- ggplot2's `scale_*_continuous(breaks = ...)` equivalent. When
+   `scale-spec` also contains `:labels` (a vector of strings), those
+   replace the auto-formatted labels at the corresponding break
+   positions."
   ([domain pixel-range scale-spec spacing]
    (compute-ticks domain pixel-range scale-spec spacing nil))
   ([domain pixel-range scale-spec spacing temporal-extent]
@@ -173,15 +176,21 @@
         :categorical? true})
      (let [n (scale/tick-count (Math/abs (double (- (second pixel-range) (first pixel-range)))) spacing)
            log? (= :log (:type scale-spec))
-           user-breaks (:breaks scale-spec)]
+           user-breaks (:breaks scale-spec)
+           user-labels (:labels scale-spec)]
        (cond
          ;; User-supplied breaks override everything — use the exact values
-         ;; they asked for, labelled with the same format the scale uses.
+         ;; they asked for. Labels come from user-supplied :labels when
+         ;; provided, otherwise from the same format the scale uses.
          (and user-breaks (sequential? user-breaks) (seq user-breaks))
          (let [vs (vec user-breaks)
                _ (warn-out-of-range-breaks! vs domain)
-               labels (if log?
+               labels (cond
+                        (and user-labels (sequential? user-labels))
+                        (mapv str user-labels)
+                        log?
                         (vec (scale/format-log-ticks vs))
+                        :else
                         (let [s (scale/make-scale domain pixel-range scale-spec)]
                           (vec (scale/format-ticks s vs))))]
            {:values vs :labels labels :categorical? false})

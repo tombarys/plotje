@@ -699,6 +699,43 @@
                  (pj/scale :y {:type :linear :breaks [0 100 200]})
                  pj/plan)))))))
 
+(deftest scale-labels-attach-to-breaks
+  (let [data (tc/dataset {:day  [1 2 3 4 5 6 7]
+                          :hour [0 6 12 18 0 6 12]
+                          :v    [0.1 0.5 0.9 0.4 0.2 0.7 0.3]})
+        days ["Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun"]
+        plan (-> data
+                 (pj/lay-tile :day :hour {:fill :v})
+                 (pj/scale :x {:type :linear
+                               :breaks [1 2 3 4 5 6 7]
+                               :labels days})
+                 pj/plan)
+        x-labels (-> plan :panels first :x-ticks :labels)
+        x-values (-> plan :panels first :x-ticks :values)]
+    (testing "user-supplied labels appear at user-supplied break positions"
+      (is (= days x-labels))
+      (is (= [1 2 3 4 5 6 7] (mapv long x-values))))))
+
+(deftest scale-labels-validation
+  (let [data (tc/dataset {:x [1 2 3] :y [10 20 30]})]
+    (testing ":labels without :breaks throws"
+      (is (thrown-with-msg?
+           clojure.lang.ExceptionInfo
+           #":labels requires :breaks"
+           (-> data
+               (pj/lay-point :x :y)
+               (pj/scale :x {:type :linear :labels ["a" "b" "c"]})))))
+
+    (testing ":breaks and :labels with mismatched counts throws"
+      (is (thrown-with-msg?
+           clojure.lang.ExceptionInfo
+           #"same count"
+           (-> data
+               (pj/lay-point :x :y)
+               (pj/scale :x {:type :linear
+                             :breaks [1 2 3]
+                             :labels ["a" "b"]})))))))
+
 (deftest plan-warns-on-unused-pose-mapping-keys
   (let [data (tc/dataset {:x [1 2 3] :y [10 20 30]
                           :ymin [5 15 25] :ymax [15 25 35]})]

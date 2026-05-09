@@ -85,9 +85,13 @@
 ;; - `pj/lay-tile` (and the underlying `:bin2d` stat) requires
 ;;   numeric x and y columns. Passing a categorical axis throws a
 ;;   clear "Stat :bin2d requires a numeric column" error at plan
-;;   time. Workaround: bin externally and render with explicit
-;;   numeric bin centers, or use `pj/lay-value-bar` with
-;;   `{:color :value}` for a categorical-axis "heatmap" look.
+;;   time. The recommended workaround is to render a numeric-indexed
+;;   grid (1-N integers in place of the categorical column) and
+;;   pair `:breaks` with `:labels` on the axis -- see Customization
+;;   and Troubleshooting for a worked example. For a true categorical
+;;   axis (binning over labels rather than numeric intervals),
+;;   `pj/lay-value-bar` with `{:color :value}` gives a categorical
+;;   "heatmap" look.
 ;;
 ;; - `pj/lay-bar` with `:position :stack` (or `:fill`) is count-only
 ;;   and rejects a `y` column -- there is no clean way to render a

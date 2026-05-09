@@ -2148,7 +2148,8 @@
 (defn scale
   "Set scale on a pose. Scale is plot-level -- it applies across every
    panel. Accepts a type keyword or a scale spec map with `:type`, optional
-   `:domain`, and optional `:breaks` (explicit tick locations). On a composite
+   `:domain`, optional `:breaks` (explicit tick locations), and optional
+   `:labels` (custom tick text paired with `:breaks`). On a composite
    pose the scale attaches to the root so every descendant leaf inherits
    it at plan time.
 
@@ -2163,10 +2164,17 @@
    The `:domain` on a discrete scale gives explicit category order for the
    legend.
 
+   `:labels` requires `:breaks` and must match it in count. Use it to
+   render numeric positions with custom text -- for example, days of the
+   week on a tile heatmap.
+
    - `(scale pose :x :log)` -- log scale on x-axis.
    - `(scale pose :x {:type :categorical :domain [...]})` -- explicit
      category order.
    - `(scale pose :y {:type :linear :breaks [0 5 10]})` -- pin tick locations.
+   - `(scale pose :x {:type :linear :breaks [1 2 3 4 5 6 7]
+                      :labels [\"Mon\" \"Tue\" \"Wed\" \"Thu\" \"Fri\" \"Sat\" \"Sun\"]})`
+     -- numeric positions with custom tick text.
    - `(scale pose :y {:type :log :domain [1 1000]})` -- log scale with
      explicit range.
    - `(scale pose :size :log)` -- log-spaced point sizes.
@@ -2202,6 +2210,20 @@
                      channel ": " (vec (sort valid-types)) "."))
               {:channel channel :scale-type type-kw
                :supported (vec (sort valid-types))})))
+    (when (map? scale-type)
+      (let [breaks (:breaks scale-type)
+            labels (:labels scale-type)]
+        (when (and labels (not breaks))
+          (throw (ex-info
+                  (str "pj/scale :labels requires :breaks. Pass both, or"
+                       " drop :labels to keep auto-formatted tick text.")
+                  {:caller "pj/scale" :channel channel :labels labels})))
+        (when (and breaks labels (not= (count breaks) (count labels)))
+          (throw (ex-info
+                  (str "pj/scale :breaks and :labels must have the same count, got "
+                       (count breaks) " breaks and " (count labels) " labels.")
+                  {:caller "pj/scale" :channel channel
+                   :breaks (vec breaks) :labels (vec labels)})))))
     (update-opts pose assoc k (if (map? scale-type)
                                 (merge {:type (if disc-visual? :categorical :linear)}
                                        scale-type)

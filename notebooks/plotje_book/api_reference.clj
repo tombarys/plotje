@@ -513,6 +513,19 @@
 
 (kind/test-last [(fn [v] (= 3 (:points (pj/svg-summary v))))])
 
+;; Custom tick labels on a numeric axis -- pair `:breaks` with
+;; `:labels`:
+
+(-> (for [d (range 1 8)] {:day d :v (mod d 3)})
+    (pj/lay-point :day :v)
+    (pj/scale :x {:type :linear
+                  :breaks [1 2 3 4 5 6 7]
+                  :labels ["Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun"]}))
+
+(kind/test-last
+ [(fn [v] (let [texts (set (:texts (pj/svg-summary v)))]
+            (every? texts ["Mon" "Sun"])))])
+
 ;; ## Faceting
 
 (kind/doc #'pj/facet)

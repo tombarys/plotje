@@ -189,6 +189,25 @@
                            (and (= 150 (:points s))
                                 (every? (set (:texts s)) ["2" "3" "4"]))))])
 
+;; Pair `:breaks` with `:labels` to render numeric positions with
+;; custom tick text. The two vectors must match in count -- each
+;; label is shown at its corresponding break. This is the path for
+;; cases like a tile heatmap where the axis is numerically indexed
+;; (1-7) but the natural labels are categorical (days of the week).
+
+(-> (for [day (range 1 8) hour (range 0 24)]
+      {:day day :hour hour :load (+ (* 0.3 (Math/sin (* 0.5 hour)))
+                                    (* 0.2 (mod day 3)))})
+    (pj/lay-tile :day :hour {:fill :load})
+    (pj/scale :x {:type :linear
+                  :breaks [1 2 3 4 5 6 7]
+                  :labels ["Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun"]})
+    (pj/options {:title "Weekly Load by Hour"}))
+
+(kind/test-last
+ [(fn [v] (let [texts (set (:texts (pj/svg-summary v)))]
+            (every? texts ["Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun"])))])
+
 ;; Order a categorical axis explicitly with `:type :categorical`
 ;; and a `:domain` vector. Without this, categories appear in their
 ;; order of first occurrence in the data.

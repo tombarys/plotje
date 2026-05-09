@@ -520,3 +520,30 @@
  (is
   ((fn [msg] (re-find #"String cannot be cast to.*Number" msg))
    v101_l562)))
+
+
+(def
+ v104_l575
+ (->
+  (for
+   [day (range 1 8) hour (range 0 24)]
+   {:day day,
+    :hour hour,
+    :v (+ (* 0.3 (Math/sin (* 0.5 hour))) (* 0.2 (mod day 3)))})
+  (pj/lay-tile :day :hour {:fill :v})
+  (pj/scale
+   :x
+   {:type :linear,
+    :breaks [1 2 3 4 5 6 7],
+    :labels ["Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun"]})))
+
+
+(deftest
+ t105_l583
+ (is
+  ((fn
+    [v]
+    (let
+     [texts (set (:texts (pj/svg-summary v)))]
+     (every? texts ["Mon" "Sun"])))
+   v104_l575)))

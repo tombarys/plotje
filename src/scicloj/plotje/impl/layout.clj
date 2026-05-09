@@ -46,12 +46,17 @@
   [domain scale-spec temporal-extent pixel-budget tick-spacing]
   (let [n (scale/tick-count (double pixel-budget) tick-spacing)
         log? (= :log (:type scale-spec))
-        user-breaks (:breaks scale-spec)]
+        user-breaks (:breaks scale-spec)
+        user-labels (:labels scale-spec)]
     (cond
       (and user-breaks (sequential? user-breaks) (seq user-breaks))
       (let [vs (vec user-breaks)
-            labels (if log?
+            labels (cond
+                     (and user-labels (sequential? user-labels))
+                     (mapv str user-labels)
+                     log?
                      (vec (scale/format-log-ticks vs))
+                     :else
                      (let [s (scale/make-scale domain [0.0 (double pixel-budget)] scale-spec)]
                        (vec (scale/format-ticks s vs))))]
         {:values vs :labels labels})
